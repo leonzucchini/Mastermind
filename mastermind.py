@@ -1,138 +1,145 @@
 """
-A program for solving mastermind puzzles (without repeating colors)
+A program for solving mastermind puzzles (without repeating colors!)
 Uses Knuth's 1977 algorithm as described on Wiki
 https://en.wikipedia.org/wiki/Mastermind_(board_game)
 """
 
 import itertools
-import random
-import pandas as pd
-import numpy as np
+# import random
+# import pandas as pd
+# import numpy as np
 
-def setup_game(cols, n_pos):
-    """Generate all possible permutations (witout repeating) given colors and positions. """
-    # Note: Could do error handling for duplicate colors in the list / too many positions
-    perms = [p[0:n_pos] for p in list(itertools.permutations(cols))]
-    pos = pd.DataFrame(perms).drop_duplicates()  # Duplicates drob is not doing anything at present
-    return pos
+class game(object):
+    """Game object with all permutations, a solution, and storage for turns. """
+
+    def __init__(self, colors, num_positions, solution_sequence):
+        """Generate all possible color permutations (witout repeating). Define solution. """
+
+        # Generate all possible permutations of colors for positions
+        self.permutations = [p[0:num_positions] for p in list(itertools.permutations(colors))]
+        self.permutations.sort()
+        list(p for p, _ in itertools.groupby(self.permutations)) # Remove duplicates
+        self.num_permutations = len(self.permutations)
+
+        # Define solution
+        self.solution_sequence = solution_sequence
+        self.solution_score = calc_score(self.solution_sequence, self.solution_sequence)
 
 def calc_score(sequence, solution_sequence):
-    """Test a guess against a solution. """
-    n_correct_col = len(pd.Series(list(set(sequence) & set(solution_sequence)))) # Number correct colors
-    n_black = sum(sequence == solution_sequence) # Number of black responses (color in the correct position)
-    n_white = n_correct_col - n_black # Number of white responses (correct color, wrong position)
-    score = pd.Series([int(n_black), int(n_white)])
-    return score
+    """Test a sequence against a solution.
+    n_black =  Number of black responses (correct color and position)
+    n_white =  Number of white responses (correct color, wrong position)
+    """
+    n_black = sum([sequence[i] == solution_sequence[i] for i in range(0, len(sequence))])
+    n_correct_col = len(list(set(sequence) & set(solution_sequence))) # Number of correct colors
+    n_white = n_correct_col - n_black
+    return (n_black, n_white)
 
-class guess(object):
-    """Guess for correct sequence incl. score. """
+# class guess(object):
+#     """Guess for correct sequence incl. score. """
 
-    def __init__(self, sequence):
-        """Initiate guess. """
-        self.sequence = sequence
-        self.score = pd.Series([np.nan, np.nan])
+#     def __init__(self, sequence):
+#         """Initiate guess. """
+#         self.sequence = sequence
 
-    def score_guess(self, solution, verbose=False):
-        """Score guess against solution. """
-        self.score = calc_score(self.sequence, solution.sequence)
-        self.score.rename({0: 'nb', 1: 'nw'}, inplace=True)
+#     def score_guess(self, solution, verbose=False):
+#         """Score guess against solution. """
+#         self.score = calc_score(self.sequence, sequence)
 
-        if verbose:
-            print pd.concat([solution.sequence, self.sequence], axis=1).transpose()
-            print self.score
+#         if verbose:
+#             print solution.sequence, self.sequence], axis=1).transpose()
+#             print self.score
 
-        return self.score
+#         return self.score
 
-class answer_set(object):
-    """Set of potentially correct answers incl. scoring against a guess. """
+# class answer_set(object):
+#     """Set of potentially correct answers incl. scoring against a guess. """
 
-    def __init__(self, initial_set):
-        """Initiate answer_set object. """
+#     def __init__(self, initial_set):
+#         """Initiate answer_set object. """
 
-        self.initial_set = initial_set # Initial set of potential answers pd.df
-        self.initial_n = initial_set.shape[0] # N obs in initial set
-        self.scores = pd.DataFrame({'nb' : [], 'nw' : []}) # Scores against a guess
+#         self.initial_set = initial_set # Initial set of potential answers pd.df
+#         self.initial_n = initial_set.shape[0] # N obs in initial set
+#         self.scores = pd.DataFrame({'nb' : [], 'nw' : []}) # Scores against a guess
 
-    def score_for_guess(self, guess):
-        """Score answer set against a guess. """
+#     def score_for_guess(self, guess):
+#         """Score answer set against a guess. """
 
-        for index, row in self.initial_set.iterrows():
-            self.scores.set_value(index, 'nb', calc_score(row, guess.sequence)[0])
-            self.scores.set_value(index, 'nw', calc_score(row, guess.sequence)[1])
-        return self.scores
+#         for index, row in self.initial_set.iterrows():
+#             self.scores.set_value(index, 'nb', calc_score(row, guess.sequence)[0])
+#             self.scores.set_value(index, 'nw', calc_score(row, guess.sequence)[1])
+#         return self.scores
 
-    def get_compatible_set(self, guess, score):
-        """Given a guess and a score, return compatible_set = all solutions in the initial set that are consistent that pattern. """
+#     def get_compatible_set(self, guess, score):
+#         """Given a guess and a score, return compatible_set = all solutions in the initial set that are consistent that pattern. """
 
-        self.compatible_set = pd.DataFrame()
-        self.score_for_guess(guess)
-        for index, row in self.scores.iterrows():
-            if sum(row == score) == 2:
-                self.compatible_set = self.compatible_set.append(self.initial_set.iloc[index], ignore_index=True)
-        self.compatible_n = self.compatible_set.shape[0]
-        return self.compatible_set
-        return self.compatible_n
+#         self.compatible_set = pd.DataFrame()
+#         self.score_for_guess(guess)
+#         for index, row in self.scores.iterrows():
+#             if sum(row == score) == 2:
+#                 self.compatible_set = self.compatible_set.append(self.initial_set.iloc[index], ignore_index=True)
+#         self.compatible_n = self.compatible_set.shape[0]
+#         return self.compatible_set
+#         return self.compatible_n
 
-    def get_next_guess(self, this_guess, score, random_guess=False):
-        """Find the next guess with the smallest compatible set, or guess at random from compatible set. """
+#     def get_next_guess(self, this_guess, score, random_guess=False):
+#         """Find the next guess with the smallest compatible set, or guess at random from compatible set. """
 
-        self.get_compatible_set(this_guess, score)
-        if random_guess:
-           self.new_guess = guess(self.compatible_set.iloc[random.randint(0, self.compatible_n), :])
+#         self.get_compatible_set(this_guess, score)
+#         if random_guess:
+#            self.new_guess = guess(self.compatible_set.iloc[random.randint(0, self.compatible_n), :])
 
-        # for index, row in self.compatible_set.iterrows():
-        #     pass
+#         # for index, row in self.compatible_set.iterrows():
+#         #     pass
 
-        return self.new_guess
+#         return self.new_guess
 
 
-def play(initial_set, initial_guess, solution):
-    """Play game. """
+# def play(initial_set, initial_guess, solution):
+#     """Play game. """
 
-    solution_score = solution.score_guess(solution)
-    n = initial_set.shape[0]
+#     solution_score = solution.score_guess(solution)
+#     n = initial_set.shape[0]
 
-    turn = 0
-    answers = answer_set(initial_set)
-    this_guess = initial_guess
-    this_score = this_guess.score_guess(solution)
+#     turn = 0
+#     answers = answer_set(initial_set)
+#     this_guess = initial_guess
+#     this_score = this_guess.score_guess(solution)
 
-    while turn < 10:
-        if sum(this_score == solution_score) == 2:
-            print "Solved it! :)"
+#     while turn < 10:
+#         if sum(this_score == solution_score) == 2:
+#             print "Solved it! :)"
 
-        else:
-            turn += 1
+#         else:
+#             turn += 1
 
-            this_guess = answers.get_next_guess(this_guess, this_score, random_guess=True)
-            this_score = this_guess.score_guess(solution)
-            answers.get_compatible_set(this_guess, this_score)
+#             this_guess = answers.get_next_guess(this_guess, this_score, random_guess=True)
+#             this_score = this_guess.score_guess(solution)
+#             answers.get_compatible_set(this_guess, this_score)
 
-            print "Turn: " + str(turn)
-            # print "Playing sequence: "
-            # print this_guess.sequence
-            # print "Scored: "
-            print "Score: %s" %(this_score.values)
-            print "Compatible answers: %d" %(answers.compatible_n)
+#             print "Turn: " + str(turn)
+#             # print "Playing sequence: "
+#             # print this_guess.sequence
+#             # print "Scored: "
+#             print "Score: %s" %(this_score.values)
+#             print "Compatible answers: %d" %(answers.compatible_n)
 
-    return None
+#     return None
 
 def main():
     """Initialize game and get solution. """
 
-    # Define colors and number of positions
-    cols = ['R', 'G', 'B', 'P', 'Y', 'L'] #L = light blue
-    n_pos = 5 # number of positions
+    # Set up game
+    columns = ['R', 'G', 'B', 'P', 'Y', 'L'] #L = light blue
+    num_positions = 5
+    solution = ['Y', 'B', 'L', 'P', 'G']
+    this_game = game(columns, num_positions, solution)
 
-    # Initialize setup
-    pos = setup_game(cols, n_pos)
-    n = pos.shape[0] # Number of potential combinations
-    solution = guess(pd.Series(['Y', 'B', 'L', 'P', 'G']))
 
-    first_turn = guess(pd.Series(['B', 'Y', 'L', 'G', 'R'])) #guess(pos.iloc[random.randint(0, n), :])
-    first_score = first_turn.score_guess(solution)
+    guess = ['B', 'Y', 'L', 'G', 'R']
+    # score = calc_score(guess, solution)
 
-    play(pos, first_turn, solution)
+    # play(pos, first_turn, solution)
 
     # ans = answer_set(pos)
     # ans.get_next_guess(first_turn, first_score, random_guess=True)
@@ -142,6 +149,13 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+### Extensions
+# 
+## Game
+# - Add error handling for duplicate colors in the list / too many positions
+# - add posibility to randomly select solution
+
 
 # ----------------------
 # Knuth's algorithm
