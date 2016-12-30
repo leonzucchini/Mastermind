@@ -6,6 +6,7 @@ https://en.wikipedia.org/wiki/Mastermind_(board_game)
 
 import itertools
 import random
+import collections
 
 # Scoring is typically done by the keyholder
 def calculate_score(sequence, solution):
@@ -38,11 +39,11 @@ class Game(object):
     def __init__(self, colors, num_positions, solution):
         """Generate all possible color permutations (witout repeating). Define solution. """
 
-        # Generate all possible permutations of colors for positions
-        self.permutations = [p[0:num_positions] for p in list(itertools.permutations(colors))]
-        self.permutations.sort()
-        list(p for p, _ in itertools.groupby(self.permutations)) # Remove duplicates
-        self.num_permutations = len(self.permutations)
+        # Generate set of all possible permutations of colors for positions
+        self.set = [p[0:num_positions] for p in list(itertools.permutations(colors))]
+        self.set.sort()
+        list(p for p, _ in itertools.groupby(self.set)) # Remove duplicates
+        self.n = len(self.set)
 
         # Define solution
         self.solution_sequence = solution
@@ -65,7 +66,7 @@ class AnswerSet(object):
             self.scores.append(calculate_score(guess.sequence, seq))
         return self.scores
 
-    def get_compatible_set(self, guess, score):
+    def get_compatible_set(self, guess):
         """Given a guess and a score, return compatible set: all consistent sequences in set. """
 
         # Return score for guess
@@ -74,22 +75,23 @@ class AnswerSet(object):
         # Get all answers that are compatible with guess-score pair
         new_set = []
         for i in range(1, self.n):
-            if self.scores[i] == score:
+            if self.scores[i] == guess.score:
                 new_set.append(self.set[i])
 
         # Reset attributes for the new set
         self.set = new_set
         self.n = len(self.set)
 
-        return self.set
-        return self.n
+        return self.set, self.n
 
-def get_next_guess(answer_set, guess, score, solution, random_guess=False):
+def get_next_guess(answers, guess, solution, random_guess=False):
     """Find next guess with smallest compatible set or guess at random. """
 
-    answer_set.get_compatible_set(guess, score)
+    answers.get_compatible_set(guess)
     if random_guess:
-        new_guess = Guess(answer_set.set[random.randint(0, len(answer_set.set))], solution)
+        print answers.n
+        print len(answers.set)
+        new_guess = Guess(answers.set[random.randint(0, answers.n)], solution)
         #####
         #####
         ## ERROR SEEMS TO BE IN THE LINE ABOVE
@@ -100,41 +102,39 @@ def get_next_guess(answer_set, guess, score, solution, random_guess=False):
 
     return new_guess
 
-# def play_game(initial_set, initial_guess, solution):
-#     """Play game. """
+def play_game(initial_set, initial_guess, solution):
+    """Play game. """
 
-#     turn = 0
-#     answers = AnswerSet(initial_set)
+    turn = 0
+    answers = AnswerSet(initial_set)
 
-#     # Make a guess and get the score
-#     guess = initial_guess
-#     guess.score_guess(solution)
+    # Make a guess and get the score
+    guess = initial_guess
 
-#     while turn < 10:
+    while turn < 10:
 
-#         # Check if guess is correct
-#         if guess.sequence == solution:
-#             print "Solved it! :)"
+        # Check if guess is correct
+        if guess.sequence == solution:
+            print "Solved it! :)"
 
-#         else:
-#             turn += 1
+        else:
+            turn += 1
 
-#             # Get compatible answers with previous guesses (path dependent!!) and score
-#             answers.get_compatible_set(guess, guess.score)
+            # Get compatible answers with previous guesses (path dependent!!) and score
+            answers.get_compatible_set(guess)
 
-#             # Make a new guess and score
-#             guess = get_next_guess(answers, guess, guess.score, solution, random_guess=True)
-#             guess.score_guess(solution)
+            # Make a new guess and score
+            guess = get_next_guess(answers, guess, solution, random_guess=True)
 
-#             print "Turn: " + str(turn)
-#             # print "Playing sequence: "
-#             # print this_guess.sequence
-#             # print "Scored: "
-#             print "Score: "
-#             print guess.score
-#             print "Compatible answers: %d" %(answers.n)
+            print "Turn: " + str(turn)
+            print "Playing sequence: "
+            print guess.sequence
+            print "Scored: "
+            print "Score: "
+            print guess.score
+            print "Compatible answers: %d" %(answers.n)
 
-#     return None
+    return None
 
 def main():
     """Initialize game and get solution. """
@@ -147,23 +147,15 @@ def main():
 
     print solution
 
-    guess = Guess(['B', 'Y', 'L', 'G', 'R'], solution)
-    answers = AnswerSet(game.permutations)
-    answers.get_compatible_set(guess, guess.score)
-
-    print guess.sequence
-    print guess.score
-    print answers.n
-
-    guess = get_next_guess(answers, guess, guess.score, solution, random_guess=True)
-    # answers = AnswerSet(game.permutations)
-    # answers.get_compatible_set(guess, guess.score)
+    guess = Guess(['B', 'L', 'Y', 'G', 'R'], solution)
+    answers = AnswerSet(game.set)
+    answers.get_compatible_set(guess)
 
     # print guess.sequence
     # print guess.score
     # print answers.n
 
-    # play_game(game.permutations, guess, solution)
+    play_game(game.set, guess, solution)
 
 
 
