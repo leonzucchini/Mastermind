@@ -1,11 +1,13 @@
 # Mastermind
 
-This code solves the [mastermind game][Wiki][wiki-mastermind]. 
+This code solves the [mastermind game][wiki-mastermind]. 
 
 ## Background
 I was given a mastermind game for Christmas and thought it woud be fun to write a program to solve it. 
 
-The initial plan was to use [Knuth's 1977 algorithm][knuth1977]. However, it turns out that algorithm is specific to a game with six colors, four potential positions, and repeated colors. That doesn't work for my game, which has six colors and *five* positions. The minimax algorithm described there might still be interesting, but I don't fully understand it yet.
+The initial plan was to use [Knuth's 1977 algorithm][knuth1977]. However, it turns out that algorithm is specific to a game with six (potentially repeated) colors, four potential positions, and repeated colors. That doesn't work for my game, which has six colors and *five* positions. 
+
+The minimax algorithm described by Knuth might still be interesting, but I don't fully understand it yet.
 
 ## Algorithm
 *[watch this space]*

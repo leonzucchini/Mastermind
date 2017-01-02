@@ -4,25 +4,9 @@ A program for solving mastermind puzzles (without repeating colors)
 
 import itertools
 import random
+import pandas
 
-def calculate_score(sequence, solution):
-    """Test a sequence against a solution.
-    n_black =  Number of black responses (correct color and position)
-    n_white =  Number of white responses (correct color, wrong position)
-    """
-    n_black = sum([sequence[i] == solution[i] for i in range(0, len(sequence))])
-    n_correct_col = len(list(set(sequence) & set(solution))) # Number of correct colors
-    n_white = n_correct_col - n_black
-    return (n_black, n_white)
-
-class Guess(object):
-    """Guess for correct sequence incl. score. """
-
-    def __init__(self, sequence, solution):
-
-        self.sequence = sequence # Sequence of colors
-        self.score = calculate_score(self.sequence, solution)
-
+## Classes
 class Game(object):
     """Game object with all permutations, a solution, and storage for turns. """
 
@@ -50,7 +34,6 @@ class AnswerSet(object):
     def get_compatible_set(self, guess):
         """Given a guess and a score, return compatible set: all consistent sequences in set. """
 
-
         # Get all answers that are compatible with guess-score pair
         new_set = []
         for seq in self.set:
@@ -67,6 +50,25 @@ class AnswerSet(object):
         self.set = new_set
 
         return self
+
+class Guess(object):
+    """Guess for correct sequence incl. score. """
+
+    def __init__(self, sequence, solution):
+
+        self.sequence = sequence # Sequence of colors
+        self.score = calculate_score(self.sequence, solution)
+
+## Functions
+def calculate_score(sequence, solution):
+    """Test a sequence against a solution.
+    n_black =  Number of black responses (correct color and position)
+    n_white =  Number of white responses (correct color, wrong position)
+    """
+    n_black = sum([sequence[i] == solution[i] for i in range(0, len(sequence))])
+    n_correct_col = len(list(set(sequence) & set(solution))) # Number of correct colors
+    n_white = n_correct_col - n_black
+    return (n_black, n_white)
 
 def get_next_guess(answers, solution, random_guess=False):
     """Find next guess with smallest compatible set or guess at random. """
